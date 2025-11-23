@@ -1,4 +1,4 @@
-// ==== 填你的三行密钥 ====
+// ==== 必填你的三行密钥 ====
 const APP_ID = '8Q7cvpos8huS3seRuNQKy5FF-gzGzoHsz';
 const APP_KEY = 'Cz5xHoRFCLe2y9wFzaAo8ZTH';
 const SERVER_URL = 'https://8q7cvpos.lc-cn-n1-shared.com';
@@ -7,6 +7,7 @@ AV.init({ appId: APP_ID, appKey: APP_KEY, serverURL: SERVER_URL });
 const Medicine = AV.Object.extend('Medicine');
 const query = new AV.Query('Medicine');
 let currentCategory = '';
+let subscription;
 
 function renderMedicines(list) {
   const container = document.getElementById('medicineList');
@@ -46,9 +47,9 @@ function renderMedicines(list) {
             <p><strong>分类：</strong>${med.get('category') || '未分类'}</p>
           </div>
           <div class="mt-6 flex gap-3">
-            <button onclick="useMedicine('${med.id}', '${med.get('name')||'此药'}')" class="btn-use">使用</button>
-            <button onclick="editMedicine('${med.id}')" class="btn-edit">编辑</button>
-            <button onclick="deleteMedicine('${med.id}')" class="btn-delete">删除</button>
+            <button onclick="useMedicine('${med.id}', '${(med.get('name')||'此药').replace(/'/g, "\\'")}')" class="bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-lg text-sm">使用</button>
+            <button onclick="editMedicine('${med.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-lg text-sm">编辑</button>
+            <button onclick="deleteMedicine('${med.id}')" class="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-lg text-sm">删除</button>
           </div>
         </div>
       </div>`;
@@ -66,13 +67,28 @@ async function loadMedicines() {
   try {
     const list = await query.descending('createdAt').find();
     renderMedicines(list);
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error('加载失败', e); }
+}
+
+async function initLiveQuery() {
+  try {
+    subscription = await query.subscribe();
+    subscription.on('create', loadMedicines);
+    subscription.on('update', loadMedicines);
+    subscription.on('delete', loadMedicines);
+    console.log('LiveQuery 实时同步已开启！');
+  } catch (e) {
+    console.warn('LiveQuery 失败，降级轮询', e);
+    setInterval(loadMedicines, 15000);
+  }
 }
 
 function filterCategory(cat) {
   currentCategory = cat;
-  document.querySelectorAll('#categoryList button').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
-  document.querySelectorAll('#categoryList button').forEach(b => b.classList.add('hover:bg-gray-100'));
+  document.querySelectorAll('#categoryList button').forEach(b => {
+    b.classList.remove('bg-blue-600', 'text-white');
+    b.classList.add('hover:bg-gray-100');
+  });
   event.target.classList.add('bg-blue-600', 'text-white');
   event.target.classList.remove('hover:bg-gray-100');
   loadMedicines();
@@ -145,7 +161,7 @@ async function deleteMedicine(id) {
 
 async function useMedicine(id, name) {
   const num = prompt(`吃了【${name}】，扣除几份？`, '1');
-  if (!num) return;
+  if (num === null) return;
   const n = parseInt(num) || 1;
   try {
     const med = AV.Object.createWithoutData('Medicine', id);
@@ -158,5 +174,6 @@ async function useMedicine(id, name) {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadMedicines();
-  setInterval(loadMedicines, 15000);
+  initLiveQuery(); // 开启 WebSocket 实时同步
 });
+
