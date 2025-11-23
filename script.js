@@ -10,7 +10,7 @@ let currentCategory = '';
 
 function renderMedicines(list) {
   const container = document.getElementById('medicineList');
-  container.innerHTML = list.length === 0 ? '<p class="col-span-4 text-center text-gray-500 text-xl">暂无药品，点左侧 + 添加第一盒药～</p>' : '';
+  container.innerHTML = list.length === 0 ? '<p class="col-span-4 text-center text-gray-500 text-xl py-20">暂无药品，点左侧 + 添加第一盒药～</p>' : '';
 
   let total = 0, expiringSoon = 0, lowStock = 0, expired = 0;
   const now = new Date();
@@ -28,26 +28,28 @@ function renderMedicines(list) {
     if (qty <= minStock) lowStock++;
     total++;
 
-    const cardClass = daysLeft === null ? '' : 
-                      daysLeft < 0 ? 'expired' : 
-                      daysLeft <= 30 ? 'expiring' : 
-                      qty <= minStock ? 'low-stock' : '';
+    const bar = daysLeft === null ? '' :
+                daysLeft < 0 ? '<div class="expired-bar">已过期</div>' :
+                daysLeft <= 30 ? '<div class="expiring-bar">即将过期</div>' :
+                qty <= minStock ? '<div class="low-stock-bar">库存不足</div>' : '';
 
     container.innerHTML += `
-      <div class="card p-6 ${cardClass}">
-        <h3 class="text-xl font-bold text-blue-700 mb-3">${med.get('name') || '未知药品'}</h3>
-        <div class="space-y-2 text-gray-700">
-          <p><strong>库存：</strong><span class="text-2xl font-bold text-blue-600">${qty}</span>${qty<=minStock?' <span class="text-red-600">(不足！)</span>':''}</p>
-          <p><strong>规格：</strong>${med.get('spec') || '未填写'}</p>
-          <p><strong>有效期至：</strong>${expiry ? expiry.toLocaleDateString('zh-CN') : '未设置'}</p>
-          ${daysLeft !== null ? `<p class="font-bold ${daysLeft<0?'text-red-600':daysLeft<=30?'text-orange-600':''}">${daysLeft<0?'已过期':`剩余 ${daysLeft} 天`}</p>` : ''}
-          <p><strong>分类：</strong>${med.get('category') || '未分类'}</p>
-          ${med.get('location') ? `<p><strong>位置：</strong>${med.get('location')}</p>` : ''}
-        </div>
-        <div class="mt-6 flex gap-3">
-          <button onclick="useMedicine('${med.id}', '${med.get('name')||'此药'}')" class="bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-green-700">使用</button>
-          <button onclick="editMedicine('${med.id}')" class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700">编辑</button>
-          <button onclick="deleteMedicine('${med.id}')" class="bg-red-600 text-white px-5 py-3 rounded-lg hover:bg-red-700">删除</button>
+      <div class="card">
+        ${bar}
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-blue-700 mb-3">${med.get('name') || '未知药品'}</h3>
+          <div class="space-y-2 text-gray-700">
+            <p><strong>库存：</strong><span class="text-2xl font-bold text-blue-600">${qty}</span>${qty<=minStock?' <span class="text-red-600">(不足！)</span>':''}</p>
+            <p><strong>规格：</strong>${med.get('spec') || '未填写'}</p>
+            <p><strong>有效期至：</strong>${expiry ? expiry.toLocaleDateString('zh-CN') : '未设置'}</p>
+            ${daysLeft !== null ? `<p class="font-bold ${daysLeft<0?'text-red-600':daysLeft<=30?'text-orange-600':''}">${daysLeft<0?'已过期':`剩余 ${daysLeft} 天`}</p>` : ''}
+            <p><strong>分类：</strong>${med.get('category') || '未分类'}</p>
+          </div>
+          <div class="mt-6 flex gap-3">
+            <button onclick="useMedicine('${med.id}', '${med.get('name')||'此药'}')" class="btn-use">使用</button>
+            <button onclick="editMedicine('${med.id}')" class="btn-edit">编辑</button>
+            <button onclick="deleteMedicine('${med.id}')" class="btn-delete">删除</button>
+          </div>
         </div>
       </div>`;
   });
@@ -69,8 +71,8 @@ async function loadMedicines() {
 
 function filterCategory(cat) {
   currentCategory = cat;
-  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
-  document.querySelectorAll('.cat-btn').forEach(b => b.classList.add('hover:bg-gray-100'));
+  document.querySelectorAll('#categoryList button').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+  document.querySelectorAll('#categoryList button').forEach(b => b.classList.add('hover:bg-gray-100'));
   event.target.classList.add('bg-blue-600', 'text-white');
   event.target.classList.remove('hover:bg-gray-100');
   loadMedicines();
@@ -158,4 +160,3 @@ document.addEventListener('DOMContentLoaded', () => {
   loadMedicines();
   setInterval(loadMedicines, 15000);
 });
-
