@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>家庭医药箱管理系统</title>
+  <!-- Tailwind CSS v3 CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- LeanCloud SDK v4.13 -->
+  <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.0/dist/av-min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leancloud-live-query@4.13.0/dist/live-query.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="container mx-auto p-4 max-w-6xl">
+    <h1 class="text-3xl font-bold text-center my-8 text-indigo-700">家庭医药箱</h1>
+
+    <!-- 添加药品按钮 -->
+    <div class="text-center mb-6">
+      <button onclick="openAddModal()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700">
+        + 添加药品
+      </button>
+    </div>
+
+    <!-- 搜索框 -->
+    <div class="mb-6">
+      <input type="text" id="searchInput" placeholder="搜索药品名..." 
+             class="w-full px-4 py-3 border rounded-lg text-lg"
+             onkeyup="filterMedicines()">
+    </div>
+
+    <!-- 药品列表 -->
+    <div id="medicineList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- JS 动态生成 -->
+    </div>
+  </div>
+
+  <!-- 添加/编辑药品模态框 -->
+  <div id="medicineModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-8 w-full max-w-lg">
+      <h2 id="modalTitle" class="text-2xl font-bold mb-6">添加药品</h2>
+      <form id="medicineForm">
+        <input type="hidden" id="editId">
+        <div class="space-y-4">
+          <input type="text" id="name" placeholder="药品名称（必填）" required class="w-full px-4 py-3 border rounded-lg">
+          <input type="text" id="spec" placeholder="规格（如 100mg*30片）" class="w-full px-4 py-3 border rounded-lg">
+          <input type="number" id</div><input type="number" id="quantity" placeholder="库存数量" required class="w-full px-4 py-3 border rounded-lg">
+          <input type="date" id="expiry" required class="w-full px-4 py-3 border rounded-lg">
+          <select id="category" class="w-full px-4 py-3 border rounded-lg">
+            <option value="">选择分类</option>
+            <option>处方药</option>
+            <option>非处方药</option>
+            <option>外用药</option>
+            <option>医疗器械</option>
+            <option>保健品</option>
+          </select>
+          <textarea id="note" placeholder="备注（如存放位置、用法）" rows="3" class="w-full px-4 py-3 border rounded-lg"></textarea>
+        </div>
+        <div class="mt-6 flex gap-4">
+          <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700">保存</button>
+          <button type="button" onclick="closeModal()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
