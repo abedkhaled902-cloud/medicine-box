@@ -6,6 +6,7 @@
   <title>家庭医药箱管理系统</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.0/dist/av-min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leancloud-live-query@4.13.0/dist/live-query.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     body { font-family: "Microsoft YaHei", -apple-system, sans-serif; background: #f5f7fa; }
@@ -15,14 +16,11 @@
     .expired-bar { @apply bg-red-500 text-white text-sm font-bold px-3 py-1; }
     .expiring-bar { @apply bg-orange-500 text-white text-sm font-bold px-3 py-1; }
     .low-stock-bar { @apply bg-yellow-500 text-white text-sm font-bold px-3 py-1; }
-    .btn-use { @apply bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg text-sm; }
-    .btn-edit { @apply bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg text-sm; }
-    .btn-delete { @apply bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm; }
+    .cat-active { @apply bg-blue-600 text-white; }
   </style>
 </head>
 <body class="min-h-screen">
 
-  <!-- 顶部栏 -->
   <div class="header text-white">
     <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
       <div class="flex items-center gap-4">
@@ -35,7 +33,7 @@
           <div class="text-lg">药品总数</div>
         </div>
         <div class="stat-box">
-          <div class="cntext-4xl font-bold text-yellow-300" id="expiringSoon">0</div>
+          <div class="text-4xl font-bold text-yellow-300" id="expiringSoon">0</div>
           <div class="text-lg">即将过期</div>
         </div>
         <div class="stat-box">
@@ -47,18 +45,17 @@
   </div>
 
   <div class="max-w-7xl mx-auto px-6 py-8 flex gap-8">
-    <!-- 左侧分类 -->
     <div class="w-64">
       <div class="bg-white rounded-xl shadow-md p-6">
         <h3 class="font-bold text-lg mb-4 text-gray-800">药品分类</h3>
         <div id="categoryList" class="space-y-2">
-          <button onclick="filterCategory('')" class="w-full text-left px-5 py-3 bg-blue-600 text-white rounded-lg">全部药品</button>
-          <button onclick="filterCategory('感冒药')" class="cat-btn w-full text-left px-5 py-3 hover:bg-gray-100 rounded-lg">感冒药</button>
-          <button onclick="filterCategory('退烧药')" class="cat-btn w-full text-left px-5 py-3 hover:bg-gray-100 rounded-lg">退烧药</button>
-          <button onclick="filterCategory('肠胃药')" class="cat-btn w-full text-left px-5 py-3 hover:bg-gray-100 rounded-lg">肠胃药</button>
-          <button onclick="filterCategory('外用药')" class="cat-btn w-full text-left px-5 py-3 hover:bg-gray-100 rounded-lg">外用药</button>
-          <button onclick="filterCategory('急救用品')" class="cat-btn w-full text-left px-5 py-3 hover:bg-gray-100 rounded-lg">急救用品</button>
-          <button onclick="filterCategory('维生素')" class="cat-btn w-full text-left px-5 py-3 hover:bg-gray-100 rounded-lg">维生素</button>
+          <button onclick="filterCategory('')" class="w-full text-left px-5 py-3 rounded-lg cat-active">全部药品</button>
+          <button onclick="filterCategory('感冒药')" class="cat-btn w-full text-left px-5 py-3 rounded-lg hover:bg-gray-100">感冒药</button>
+          <button onclick="filterCategory('退烧药')" class="cat-btn w-full text-left px-5 py-3 rounded-lg hover:bg-gray-100">退烧药</button>
+          <button onclick="filterCategory('肠胃药')" class="cat-btn w-full text-left px-5 py-3 rounded-lg hover:bg-gray-100">肠胃药</button>
+          <button onclick="filterCategory('外用药')" class="cat-btn w-full text-left px-5 py-3 rounded-lg hover:bg-gray-100">外用药</button>
+          <button onclick="filterCategory('急救用品')" class="cat-btn w-full text-left px-5 py-3 rounded-lg hover:bg-gray-100">急救用品</button>
+          <button onclick="filterCategory('维生素')" class="cat-btn w-full text-left px-5 py-3 rounded-lg hover:bg-gray-100">维生素</button>
         </div>
       </div>
       <button onclick="openAddModal()" class="mt-6 w-full bg-blue-600 text-white py-4 rounded-xl text-lg font-bold shadow-lg hover:bg-blue-700">
@@ -69,39 +66,26 @@
       </button>
     </div>
 
-    <!-- 主内容区 -->
     <div class="flex-1">
       <div class="bg-white rounded-xl shadow-md p-6 mb-6 flex justify-between items-center">
         <input type="text" id="searchInput" onkeyup="searchMedicine()" placeholder="搜索药品名称..." class="px-5 py-3 border rounded-lg w-96">
-        <button onclick="loadMedicines()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700">刷新</button>
+        <button onclick="loadMedicines()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 ml-4">刷新</button>
       </div>
 
       <div id="medicineList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <!-- JS 生成卡片 -->
       </div>
 
-      <!-- 底部预警 -->
       <div class="mt-10 bg-white rounded-xl shadow-md p-8">
         <h3 class="text-xl font-bold mb-6 text-gray-800">过期与库存预警</h3>
         <div class="space-y-5 text-lg">
-          <div class="flex justify-between items-center text-red-600">
-            <span>已过期药品</span>
-            <span class="font-bold" id="expiredCount">0 件</span>
-          </div>
-          <div class="flex justify-between items-center text-orange-600">
-            <span>即将过期（30天内）</span>
-            <span class="font-bold" id="expiringCount">0 件</span>
-          </div>
-          <div class="flex justify-between items-center text-blue-600">
-            <span>库存不足（≤3）</span>
-            <span class="font-bold" id="lowStockCount">0 件</span>
-          </div>
+          <div class="flex justify-between text-red-600"><span>已过期药品</span><span class="font-bold" id="expiredCount">0 件</span></div>
+          <div class="flex justify-between text-orange-600"><span>即将过期（30天内）</span><span class="font-bold" id="expiringCount">0 件</span></div>
+          <div class="flex justify-between text-blue-600"><span>库存不足（≤3）</span><span class="font-bold" id="lowStockCount">0 件</span></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 添加/编辑弹窗 -->
   <div id="medicineModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl">
       <h2 class="text-2xl font-bold mb-6" id="modalTitle">添加药品</h2>
@@ -112,9 +96,9 @@
         <input type="number" id="quantity" required placeholder="库存数量" class="px-4 py-3 border rounded-lg">
         <input type="number" id="minStock" value="3" placeholder="库存预警值" class="px-4 py-3 border rounded-lg">
         <input type="date" id="expiry" required class="col-span-2 px-4 py-3 border rounded-lg">
-        <input type="text" id="category" placeholder="分类（如 感冒药）" class="px-4 py-3 border rounded-lg">
+        <input type="text" id="category" placeholder="分类" class="px-4 py-3 border rounded-lg">
         <input type="text" id="location" placeholder="存放位置" class="px-4 py-3 border rounded-lg">
-        <textarea id="note" rows="3" placeholder="备注/用法用量" class="col-span-2 px-4 py-3 border rounded-lg"></textarea>
+        <textarea id="note" rows="3" placeholder="备注" class="col-span-2 px-4 py-3 border rounded-lg"></textarea>
         <div class="col-span-2 flex gap-4">
           <button type="submit" class="flex-1 bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700">保存</button>
           <button type="button" onclick="closeModal()" class="flex-1 bg-gray-400 text-white py-4 rounded-lg font-bold hover:bg-gray-500">取消</button>
@@ -126,3 +110,4 @@
   <script src="script.js"></script>
 </body>
 </html>
+
